@@ -294,7 +294,7 @@ typedef struct {
 #define SHF_MASKPROC	0xf0000000	/* reserved bits for processor */
 /*  specific section attributes */
 
-/* [Symbol Table Entry] ·ûºÅ±í */
+/* Symbol Table Entry */
 typedef struct elf32_sym {
 	Elf32_Word	st_name;	/* name - index into string table */
 	Elf32_Addr	st_value;	/* symbol value */
