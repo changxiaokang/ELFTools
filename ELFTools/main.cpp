@@ -5,7 +5,6 @@
 
 #include "elf.h"
 
-
 // 	Sections -> sect	节
 // 	Segments -> segm	段
 
@@ -14,92 +13,54 @@
 #define SAFE_DELARR(ptr) { delete [] ptr; ptr = NULL;} 
 #define SAFE_FCLOSE(ptr) { fclose(ptr); ptr = NULL;}
 
+int get_cmd_line(char* cmd);
 FILE* safe_read_file(char* path);
+unsigned long get_file_size(FILE* fp);
+unsigned char* get_base_address(FILE* fp);
 
-Elf32_Ehdr* read_elf_head(unsigned long* base);
-Elf32_Phdr* read_prog_table(unsigned long* base);
-Elf32_Shdr* read_sect_table(unsigned long* base);
+void read_elf_header(unsigned char* base);
+void read_prog_table(unsigned char* base);
+void read_sect_table(unsigned char* base);
 
-Elf32_Shdr* get_shstrtab_segm(unsigned long* base);
-void* read_sect_segm(unsigned long* base);
+unsigned char* get_shstrtab_segm(unsigned char* base, int shstrndx);
+
 
 int main(int argc, char* argv[])
 {
-	
 	FILE* fp = safe_read_file("hello.so");
 
-	// 计算文件大小
-	rewind(fp);
-	fseek(fp, 0, SEEK_END);
-	int size = ftell(fp); 
+	unsigned char* base = NULL;
+	base = get_base_address(fp);
 
-	// 拿到基地址
-	unsigned long* base = (unsigned long*)malloc(size);
-	memset(base, 0, size);
-	rewind(fp);
-	fread(base, 1, size, fp);
-
-	// 解析ELF头
-	Elf32_Ehdr* Ehdr = read_elf_head(base);
-	puts("\r\n> Program Header Info");
-	printf("Ehdr.e_phoff: %d\r\n", Ehdr->e_phoff);
-	printf("Ehdr.e_phentsize: %d\r\n", Ehdr->e_phentsize);
-	printf("Ehdr.e_phnum: %d\r\n", Ehdr->e_phnum);
-
-	// 遍历[程序表]->段
-	Elf32_Phdr* Phdr = read_prog_table(base);
-	puts("\r\n> Traverse Program Table Element");
-	Elf32_Phdr _Phdr;
-	int ph_size = sizeof(Elf32_Phdr);
-	memset(&_Phdr, 0, ph_size);
-	for (int i = 0; i < Ehdr->e_phnum; i++)
+	switch (get_cmd_line(argv[1]))
 	{
-		// !!! 此处代码冗余 !!!
-		rewind(fp);
-		fseek(fp, Ehdr->e_phoff + (i * ph_size), SEEK_CUR);
-		fread(&_Phdr, 1, ph_size, fp);
-
-		printf("Program Table Element[%d]\r\n", i);
-		printf("Phdr.p_offset: %d\r\n", _Phdr.p_offset);
-		printf("Phdr.p_filesz: %d\r\n", _Phdr.p_filesz);
+	case 'h':
+		read_elf_header(base);
+		break;
+	case 'P':
+		read_prog_table(base);
+		break;
+	case 'S':
+		read_sect_table(base);
+		break;
+	default:
+		puts("input error");
+		break;
 	}
-
-	// 遍历[节表]->段
-	Elf32_Shdr* Shdr = read_sect_table(base);
-	puts("\r\n> Section Header Info");
-	printf("Ehdr.e_phoff: %d\r\n", Ehdr->e_shoff);
-	printf("Ehdr.e_shentsize: %d\r\n", Ehdr->e_shentsize);
-	printf("Ehdr.e_phnum: %d\r\n", Ehdr->e_shnum);
-
-	puts("\r\n> Traverse Section Table Element");
-	Elf32_Shdr _Shdr;
-	int sh_size = sizeof(Elf32_Shdr);
-	memset(&_Shdr, 0, sh_size);
-	for (int i = 0; i < Ehdr->e_shnum; i++)
-	{
-		// !!! 此处代码冗余 !!!
-		rewind(fp);
-		fseek(fp, Ehdr->e_shoff + (i * sh_size), SEEK_CUR);
-		fread(&_Shdr, 1, sh_size, fp);
-		printf("Section Table Element[%d]\r\n", i);
-		printf("Shdr.sh_name: %d\r\n", _Shdr.sh_name);
-		printf("Shdr.sh_offset: %d\r\n", _Shdr.sh_offset);
-		printf("Shdr.sh_size: %d\r\n", _Shdr.sh_size);
-	}
-
-	// [.shstrtab] 字符串表段
-	puts("\r\n> [.shstrtab] Info");
-	Elf32_Shdr* _shstrtab_segm = get_shstrtab_segm(base);
-	printf("[.shstrtab] sh_offset: %d\r\n", _shstrtab_segm->sh_offset);
-	printf("[.shstrtab] sh_size: %d\r\n", _shstrtab_segm->sh_size);
 	
 SAFE_EXIT:
-	SAFE_DEL(base);
 	SAFE_FCLOSE(fp);
 
 	return 0;
 }
 
+
+unsigned long get_file_size(FILE* fp)
+{
+	rewind(fp);
+	fseek(fp, 0, SEEK_END);
+	return ftell(fp);
+}
 
 FILE* safe_read_file(char* path)
 {
@@ -118,66 +79,153 @@ FILE* safe_read_file(char* path)
 	return fp;
 }
 
-// 解析ELF头
-Elf32_Ehdr* read_elf_head(unsigned long* base)
+unsigned char* get_base_address(FILE* fp)
 {
-	return (Elf32_Ehdr*)base;
+	unsigned long size = get_file_size(fp);
+	unsigned char* base = (unsigned char*)malloc(size);
+	memset(base, 0, size);
+	rewind(fp);
+	fread(base, 1, size, fp);
+	return base;
+}
+
+int get_cmd_line(char* cmd)
+{
+	if (!strcmp(cmd, "-h"))
+		return 'h';
+
+	if (!strcmp(cmd, "-P"))
+		return 'P';
+
+	if (!strcmp(cmd, "-S"))
+		return 'S';
+
+	return 0;
+}
+
+// 解析ELF头
+void read_elf_header(unsigned char* base)
+{
+	Elf32_Ehdr* Ehdr = (Elf32_Ehdr*)base;
+
+	//unsigned char	e_ident[EI_NIDENT] = Ehdr->e_ident;	/* Id bytes */
+	Elf64_Quarter	e_type = Ehdr->e_type;				/* file type */
+	Elf64_Quarter	e_machine = Ehdr->e_machine;		/* machine type */
+	Elf64_Half		e_version = Ehdr->e_ehsize;			/* version number */
+	Elf64_Addr		e_entry = Ehdr->e_entry;			/* entry point */
+	Elf64_Off		e_phoff = Ehdr->e_phoff;			/* Program hdr offset */
+	Elf64_Off		e_shoff = Ehdr->e_shoff;			/* Section hdr offset */
+	Elf64_Half		e_flags = Ehdr->e_flags;			/* Processor flags */
+	Elf64_Quarter	e_ehsize = Ehdr->e_ehsize;			/* sizeof ehdr */
+	Elf64_Quarter	e_phentsize = Ehdr->e_phentsize;	/* Program header entry size */
+	Elf64_Quarter	e_phnum = Ehdr->e_phnum;			/* Number of program headers */
+	Elf64_Quarter	e_shentsize = Ehdr->e_shentsize;	/* Section header entry size */
+	Elf64_Quarter	e_shnum = Ehdr->e_shnum;			/* Number of section headers */
+	Elf64_Quarter	e_shstrndx = Ehdr->e_shstrndx;		/* String table index */
+
+	printf("\r\n ELF Header: \r\n");
+	printf("    e_type:%d\r\n", e_type);
+	printf("    e_machine:%d\r\n", e_machine);
+	printf("    e_version:%d\r\n", e_version);
+	printf("    e_entry:0x%08X\r\n", e_entry);
+	printf("    e_phoff:%Xh\r\n", e_phoff);
+	printf("    e_shoff:%Xh\r\n", e_shoff);
+	printf("    e_flags:%d\r\n", e_flags);
+	printf("    e_ehsize:%d\r\n", e_ehsize);
+	printf("    e_phentsize:%d\r\n", e_phentsize);
+	printf("    e_phnum:%d\r\n", e_phnum);
+	printf("    e_shentsize:%d\r\n", e_shentsize);
+	printf("    e_shnum:%d\r\n", e_shnum);
+	printf("    e_shentsize:%d\r\n", e_shentsize);
+	printf("    e_shnum:%d\r\n", e_shnum);
+	printf("    e_shstrndx:%d\r\n", e_shstrndx);
 }
 
 // 解析程序表
-Elf32_Phdr* read_prog_table(unsigned long* base)
+void read_prog_table(unsigned char* base)
 {
 	Elf32_Ehdr* Ehdr = (Elf32_Ehdr*)base;
-	return (Elf32_Phdr*)(base + (Ehdr->e_phoff));
+	Elf32_Phdr* Phdr = (Elf32_Phdr*)(base + (Ehdr->e_phoff));
+
+	printf("\r\n Program Header Table: \r\n");
+	for (int i = 0; i < Ehdr->e_phnum; i++)
+	{
+		Phdr = Phdr + i;
+		Elf32_Word	p_type   = Phdr->p_type;		// segment type
+		Elf32_Off	p_offset = Phdr->p_offset;		// segment offset
+		Elf32_Addr	p_vaddr  = Phdr->p_vaddr;		// virtual address of segment
+		Elf32_Addr	p_paddr  = Phdr->p_paddr;		// physical address - ignored?
+		Elf32_Word	p_filesz = Phdr->p_filesz;		// number of bytes in file for seg.
+		Elf32_Word	p_memsz  = Phdr->p_memsz;		// number of bytes in mem. for seg.
+		Elf32_Word	p_flags  = Phdr->p_flags;		// flags
+		Elf32_Word	p_align  = Phdr->p_align;		// memory alignment
+
+		printf("\r\n <%d> \r\n", i);
+		printf("    p_type:%d\r\n", p_type);
+		printf("    p_offset:%Xh\r\n", p_offset);
+		printf("    p_vaddr:%d\r\n", p_vaddr);
+		printf("    p_paddr:%d\r\n", p_paddr);
+		printf("    p_filesz:%d\r\n", p_filesz);
+		printf("    p_memsz:%d\r\n", p_memsz);
+		printf("    p_flags:%d\r\n", p_flags);
+		printf("    p_align:%d\r\n", p_align);
+	}
 }
 
 // 解析节表
-Elf32_Shdr* read_sect_table(unsigned long* base)
+void read_sect_table(unsigned char* base)
 {
 	Elf32_Ehdr* Ehdr = (Elf32_Ehdr*)base;
-	return (Elf32_Shdr*)(base + (Ehdr->e_shoff));
+	Elf32_Shdr* Shdr = (Elf32_Shdr*)(base + (Ehdr->e_shoff));
+
+	printf("\r\n Section Header Table: \r\n");
+	for (int i = 0; i < Ehdr->e_shnum; i++)
+	{
+		Shdr = Shdr + i;
+		Elf32_Word	sh_name = Shdr->sh_name;			/* name - index into section header string table section */
+		Elf32_Word	sh_type = Shdr->sh_type;			/* type */
+		Elf32_Word	sh_flags = Shdr->sh_flags;			/* flags */
+		Elf32_Addr	sh_addr = Shdr->sh_addr;			/* address */
+		Elf32_Off	sh_offset = Shdr->sh_offset;		/* file offset */
+		Elf32_Word	sh_size = Shdr->sh_size;			/* section size */
+		Elf32_Word	sh_link = Shdr->sh_link;			/* section header table index link */
+		Elf32_Word	sh_info = Shdr->sh_info;			/* extra information */
+		Elf32_Word	sh_addralign = Shdr->sh_addralign;	/* address alignment */
+		Elf32_Word	sh_entsize = Shdr->sh_entsize;		/* section entry size */
+
+		printf("\r\n <%d> \r\n", i);
+		printf("    sh_name:%s\r\n", get_shstrtab_segm(base, sh_name));
+		printf("    sh_type:%d\r\n", sh_type);
+		printf("    sh_flags:%d\r\n", sh_flags);
+		printf("    sh_addr:0x%08X\r\n", sh_addr);
+		printf("    sh_offset:%Xh\r\n", sh_offset);
+		printf("    sh_size:%d\r\n", sh_size);
+		printf("    sh_link:%d\r\n", sh_link);
+		printf("    sh_info:%d\r\n", sh_info);
+		printf("    sh_addralign:%d\r\n", sh_addralign);
+		printf("    sh_entsize:%d\r\n", sh_entsize);
+	}
 }
 
-// 解析.shstrtab段 (固定位置在末尾)
-Elf32_Shdr* get_shstrtab_segm(unsigned long* base)
+// 解析.shstrtab段 => s_data[]
+unsigned char* get_shstrtab_segm(unsigned char* base, int shstrndx)
 {
 	Elf32_Ehdr* Ehdr = (Elf32_Ehdr*)base;
-	Elf32_Shdr* Shdr = (Elf32_Shdr*)(base + (Ehdr->e_phoff));
-	int shstrtab_idx = Ehdr->e_shstrndx;
-	int shstrtab_offset = shstrtab_idx * sizeof(Elf32_Shdr);
-	int shdr_offset = Shdr->sh_offset;
-	return (Elf32_Shdr*)(base + (shdr_offset + shstrtab_offset));
+	Elf32_Shdr* Shdr = (Elf32_Shdr*)(base + (Ehdr->e_shoff));
+
+	// .shstrtab offset
+	Shdr += Ehdr->e_shstrndx;
+	Elf32_Off shstrtab_off = Shdr->sh_offset;
+	Elf32_Word shstrtab_size = Shdr->sh_size;
+
+	unsigned char* s_data = base + shstrtab_off + shstrndx;
+	return s_data;
 }
 
 // 解析 段数据
-void* read_sect_segm(unsigned long* base)
+void read_sect_segm(unsigned char* base)
 {
-	return NULL;
+
 }
-
-
-/*
-[ELF Header]
-
-	[Program Header]
-		程序头偏移
-		程序头大小
-		程序头个数
-
-		[Program Header Table]
-			节表偏移
-			节表大小
-
-	[Section Header]
-		节表偏移
-		节表大小
-		节表个数
-
-		[Section Header Table]
-			节表名
-			节表偏移
-			节表大小
-*/
-
 
 
