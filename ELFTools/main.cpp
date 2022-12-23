@@ -5,9 +5,6 @@
 
 #include "elf.h"
 
-// 	Sections -> sect	节
-// 	Segments -> segm	段
-
 #define SAFE_FREE(ptr) { free(ptr); ptr = NULL;}
 #define SAFE_DEL(ptr) { delete ptr; ptr = NULL;} 
 #define SAFE_DELARR(ptr) { delete [] ptr; ptr = NULL;} 
@@ -21,31 +18,38 @@ unsigned char* get_base_address(FILE* fp);
 void read_elf_header(unsigned char* base);
 void read_prog_table(unsigned char* base);
 void read_sect_table(unsigned char* base);
+void read_dyn_table(unsigned char* base);
 
-unsigned char* get_shstrtab_segm(unsigned char* base, int shstrndx);
+unsigned char* get_shstrtab_name(unsigned char* base, int shstrndx);
 
 int main(int argc, char* argv[])
 {
+//  FILE* fp = safe_read_file(argv[2]);
     FILE* fp = safe_read_file("hello.so");
 
     unsigned char* base = NULL;
     base = get_base_address(fp);
 
-    switch (get_cmd_line(argv[1]))
-    {
-    case 'h':
-        read_elf_header(base);
-        break;
-    case 'P':
-        read_prog_table(base);
-        break;
-    case 'S':
-        read_sect_table(base);
-        break;
-    default:
-        puts("input error");
-        break;
-    }
+    read_elf_header(base);
+    read_prog_table(base);
+    read_sect_table(base);
+    read_dyn_table(base);
+
+//     switch (get_cmd_line(argv[1]))
+//     {
+//     case 'h':
+//         read_elf_header(base);
+//         break;
+//     case 'P':
+//         read_prog_table(base);
+//         break;
+//     case 'S':
+//         read_sect_table(base);
+//         break;
+//     default:
+//         puts("input error");
+//         break;
+//     }
 
 SAFE_EXIT:
     SAFE_FCLOSE(fp);
@@ -193,7 +197,7 @@ void read_sect_table(unsigned char* base)
         Elf32_Word sh_entsize = Shdr->sh_entsize;		/* section entry size */
 
         printf("\r\n <%d> \r\n", i);
-        printf("    sh_name:%s\r\n", get_shstrtab_segm(base, sh_name));
+        printf("    sh_name:%s\r\n", get_shstrtab_name(base, sh_name));
         printf("    sh_type:%d\r\n", sh_type);
         printf("    sh_flags:%d\r\n", sh_flags);
         printf("    sh_addr:0x%08X\r\n", sh_addr);
@@ -206,8 +210,8 @@ void read_sect_table(unsigned char* base)
     }
 }
 
-// 解析.shstrtab段 => s_data[]
-unsigned char* get_shstrtab_segm(unsigned char* base, int shstrndx)
+// 解析 .shstrtab段 => s_data[]
+unsigned char* get_shstrtab_name(unsigned char* base, int shstrndx)
 {
     Elf32_Ehdr* Ehdr = (Elf32_Ehdr*)base;
     Elf32_Shdr* Shdr = (Elf32_Shdr*)(base + (Ehdr->e_shoff));
@@ -221,9 +225,38 @@ unsigned char* get_shstrtab_segm(unsigned char* base, int shstrndx)
     return s_data;
 }
 
-// 解析 段数据
-void read_sect_segm(unsigned char* base)
+// 解析 .daymac段 => 
+void read_dyn_table(unsigned char* base)
 {
+    Elf32_Ehdr* Ehdr = (Elf32_Ehdr*)base;
+    Elf32_Shdr* Shdr = (Elf32_Shdr*)(base + (Ehdr->e_shoff));
 
+    printf("\r\n Dynamic Symbol Table: \r\n");
+    for (int i = 0; i < Ehdr->e_shnum; i++)
+    {        
+        Shdr = Shdr + i;
+        if (Shdr->sh_type == SHT_DYNSYM)
+        {
+            Elf32_Sym* Sym = (Elf32_Sym*)(base + (Shdr->sh_offset));
+            for (int i = 0; i < (Shdr->sh_size / sizeof(Elf32_Sym)); i++)
+            {
+                Sym += i;
+                Elf32_Word    st_name = Sym->st_name;	/* name - index into string table */
+                Elf32_Addr    st_value = Sym->st_value;	/* symbol value */
+                Elf32_Word    st_size = Sym->st_size;	/* symbol size */
+                unsigned char st_info = Sym->st_info;	/* type and binding */
+                unsigned char st_other = Sym->st_other;	/* 0 - no defined meaning */
+                Elf32_Half    st_shndx = Sym->st_shndx;	/* section header index */
+
+                printf("\r\n <%d> \r\n", i);
+                printf("    st_name:%s\r\n", get_shstrtab_name(base, st_name));
+                printf("    st_value:0x%08X\r\n", st_value);
+                printf("    st_size:%d\r\n", st_size);
+                printf("    st_info:%d\r\n", st_info);
+                printf("    st_other:%d\r\n", st_other);
+                printf("    st_shndx:%d\r\n", st_shndx);
+            }
+        }
+    }
 }
 
