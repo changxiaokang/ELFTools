@@ -253,6 +253,7 @@ void help_document()
     puts("-S Section Header Table");
     puts("-d Dynsym Headr Table");
     puts("-h Help Document");
+    getchar();
 }
 
 unsigned char* get_base_address(FILE* fp)
