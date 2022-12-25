@@ -20,45 +20,47 @@ void help_document();
 void read_elf_header(unsigned char* base);
 void read_prog_table(unsigned char* base);
 void read_sect_table(unsigned char* base);
-void read_dyn_table(unsigned char* base);
+void read_dynsym_table(unsigned char* base);
+void read_rodata_section(unsigned char* base);
 
 unsigned char* get_dynstr_name(unsigned char* base, int dynstrndx);
 unsigned char* get_shstrtab_name(unsigned char* base, int shstrndx);
 
 int main(int argc, char* argv[])
 {
-    FILE* fp = safe_read_file(argv[2]);
-    // FILE* fp = safe_read_file("hello.so");
+    // FILE* fp = safe_read_file(argv[2]);
+    FILE* fp = safe_read_file("hello.so");
 
     unsigned char* base = NULL;
     base = get_base_address(fp);
 
-//     read_elf_header(base);
-//     read_prog_table(base);
-//     read_sect_table(base);
-//     read_dyn_table(base);
+    read_elf_header(base);
+    read_prog_table(base);
+    read_sect_table(base);
+    read_dynsym_table(base);
+    read_rodata_section(base);
 
-    switch (get_cmd_line(argv[1]))
-    {
-    case 'H':
-        read_elf_header(base);
-        break;
-    case 'P':
-        read_prog_table(base);
-        break;
-    case 'S':
-        read_sect_table(base);
-        break;
-    case 'd':
-        read_dyn_table(base);
-        break;
-    case 'h':
-        help_document();
-        break;
-    default:
-        puts("input error");
-        break;
-    }
+//     switch (get_cmd_line(argv[1]))
+//     {
+//     case 'H':
+//         read_elf_header(base);
+//         break;
+//     case 'P':
+//         read_prog_table(base);
+//         break;
+//     case 'S':
+//         read_sect_table(base);
+//         break;
+//     case 'd':
+//         read_dynsym_table(base);
+//         break;
+//     case 'h':
+//         help_document();
+//         break;
+//     default:
+//         puts("input error");
+//         break;
+//     }
 
 SAFE_EXIT:
     SAFE_FCLOSE(fp);
@@ -174,7 +176,7 @@ void read_sect_table(unsigned char* base)
 }
 
 // Symbol Table Entry
-void read_dyn_table(unsigned char* base)
+void read_dynsym_table(unsigned char* base)
 {
     Elf32_Ehdr* Ehdr = (Elf32_Ehdr*)base;
     Elf32_Shdr* Shdr = (Elf32_Shdr*)(base + (Ehdr->e_shoff));
@@ -243,6 +245,36 @@ unsigned char* get_dynstr_name(unsigned char* base, int dynstrndx)
     }
 
     return s_data;
+}
+
+void read_rodata_section(unsigned char* base)
+{
+    unsigned char* s_data = NULL;
+    Elf32_Ehdr* Ehdr = (Elf32_Ehdr*)base;
+    Elf32_Shdr* Shdr = (Elf32_Shdr*)(base + (Ehdr->e_shoff));
+
+    // .dynstr offset
+    printf("\r\n .rodata Section String: \r\n");
+    for (int i = 0; i < Ehdr->e_shnum; i++)
+    {
+        unsigned char* sh_name = get_shstrtab_name(base, Shdr->sh_name);
+        if (strcmp((const char*)sh_name, ".rodata") == 0)
+        {
+            unsigned char* buff = base + Shdr->sh_offset;
+
+            for (int i = 0; i < Shdr->sh_size; i++)
+            {
+                if (i == 0)
+                    printf("    %s\r\n", buff);
+                if (*buff == '\0')
+                    printf("    %s\r\n", ++buff);
+                buff++;
+            }
+
+            break;
+        }
+        Shdr++;
+    }
 }
 
 void help_document()
