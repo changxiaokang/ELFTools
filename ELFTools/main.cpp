@@ -14,12 +14,13 @@
 FILE* safe_read_file(char* path);
 unsigned int get_cmd_line(char* cmd);
 unsigned int get_file_size(FILE* fp);
-unsigned char* get_base_address(FILE* fp);
+unsigned char* get_base_address(FILE* fp, unsigned char* base);
 
 void help_document();
 void read_elf_header(unsigned char* base);
 void read_prog_table(unsigned char* base);
 void read_sect_table(unsigned char* base);
+void read_relo_table(unsigned char* base);
 void read_dynsym_table(unsigned char* base);
 void read_rodata_section(unsigned char* base);
 
@@ -28,42 +29,51 @@ unsigned char* get_shstrtab_name(unsigned char* base, int shstrndx);
 
 int main(int argc, char* argv[])
 {
-    // FILE* fp = safe_read_file(argv[2]);
-    FILE* fp = safe_read_file("hello.so");
+    FILE* fp = safe_read_file(argv[2]);
+    // FILE* fp = safe_read_file("hello.so");
 
     unsigned char* base = NULL;
-    base = get_base_address(fp);
+    base = (unsigned char*)malloc(get_file_size(fp));
+    get_base_address(fp, base);
 
-    read_elf_header(base);
-    read_prog_table(base);
-    read_sect_table(base);
-    read_dynsym_table(base);
-    read_rodata_section(base);
+//     read_elf_header(base);
+//     read_prog_table(base);
+//     read_sect_table(base);
+//     read_relo_table(base);
+//     read_dynsym_table(base);
+//     read_rodata_section(base);
 
-//     switch (get_cmd_line(argv[1]))
-//     {
-//     case 'H':
-//         read_elf_header(base);
-//         break;
-//     case 'P':
-//         read_prog_table(base);
-//         break;
-//     case 'S':
-//         read_sect_table(base);
-//         break;
-//     case 'd':
-//         read_dynsym_table(base);
-//         break;
-//     case 'h':
-//         help_document();
-//         break;
-//     default:
-//         puts("input error");
-//         break;
-//     }
+    switch (get_cmd_line(argv[1]))
+    {
+    case 'h':
+        read_elf_header(base);
+        break;
+    case 'l':
+        read_prog_table(base);
+        break;
+    case 'S':
+        read_sect_table(base);
+        break;
+    case 'r':
+        read_relo_table(base);
+        break;
+    case 'd':
+        read_dynsym_table(base);
+        break;
+    case 'a':
+        read_rodata_section(base);
+        break;
+    case 'H':
+        help_document();
+        break;
+    default:
+        puts("input error");
+        break;
+    }
 
 SAFE_EXIT:
     SAFE_FCLOSE(fp);
+    SAFE_FREE(base);
 
     return 0;
 }
@@ -212,6 +222,33 @@ void read_dynsym_table(unsigned char* base)
     }
 }
 
+// Relocation Table Entry
+void read_relo_table(unsigned char* base)
+{
+    Elf32_Ehdr* Ehdr = (Elf32_Ehdr*)base;
+    Elf32_Shdr* Shdr = (Elf32_Shdr*)(base + (Ehdr->e_shoff));
+
+    printf("\r\n Relocation Table: \r\n");
+    for (int i = 0; i < Ehdr->e_shnum; i++)
+    {
+        if (Shdr->sh_type == SHT_REL)
+        {
+            printf("\r\n  %s relocation info:\r\n", get_shstrtab_name(base, Shdr->sh_name));
+            Elf32_Rel* Rel = (Elf32_Rel*)(base + (Shdr->sh_offset));
+            for (int i = 0; i < (Shdr->sh_size / sizeof(Elf32_Rel)); i++)
+            {
+                Elf32_Addr  r_offset = Rel->r_offset;       /* offset of relocation */
+                Elf32_Word  r_info = Rel->r_info;           /* symbol table index and type */
+                Elf32_Word r_sym = ELF32_R_SYM(r_info);
+                Elf32_Word r_type = ELF32_R_TYPE(r_info);
+                printf("  <%d>\t r_offset:0x%08X\t r_info:%d\t r_type:%d | r_sym:%d\r\n", i, r_offset, r_info, r_type, r_sym);
+                Rel++;
+            }
+        }
+        Shdr++;
+    }
+}
+
 // Section String Table [.shstrtab]
 unsigned char* get_shstrtab_name(unsigned char* base, int shstrndx)
 {
@@ -267,7 +304,7 @@ void read_rodata_section(unsigned char* base)
                 if (i == 0)
                     printf("    %s\r\n", buff);
                 if (*buff == '\0')
-                    printf("    %s\r\n", ++buff);
+                    printf("    %s\r\n", (buff + 1));
                 buff++;
             }
 
@@ -280,18 +317,19 @@ void read_rodata_section(unsigned char* base)
 void help_document()
 {
     puts("Usage: ELFTools <option(s)> <file(s)>");
-    puts("-H ELF Header");
-    puts("-P Program Header Table");
+    puts("-h ELF Header");
+    puts("-l Program Header Table");
     puts("-S Section Header Table");
-    puts("-d Dynsym Headr Table");
-    puts("-h Help Document");
+    puts("-d Dynsym Table");
+    puts("-r Relocation Table");
+    puts("-a RoData Section");
+    puts("-H Help Document");
     getchar();
 }
 
-unsigned char* get_base_address(FILE* fp)
+unsigned char* get_base_address(FILE* fp, unsigned char* base)
 {
     unsigned long size = get_file_size(fp);
-    unsigned char* base = (unsigned char*)malloc(size);
     memset(base, 0, size);
     rewind(fp);
     fread(base, 1, size, fp);
@@ -307,11 +345,11 @@ unsigned int get_file_size(FILE* fp)
 
 unsigned int get_cmd_line(char* cmd)
 {
-    if (!strcmp(cmd, "-H"))
-        return 'H';
+    if (!strcmp(cmd, "-h"))
+        return 'h';
 
-    if (!strcmp(cmd, "-P"))
-        return 'P';
+    if (!strcmp(cmd, "-l"))
+        return 'l';
 
     if (!strcmp(cmd, "-S"))
         return 'S';
@@ -319,8 +357,14 @@ unsigned int get_cmd_line(char* cmd)
     if (!strcmp(cmd, "-d"))
         return 'd';
 
-    if (!strcmp(cmd, "-h"))
-        return 'h';
+    if (!strcmp(cmd, "-r"))
+        return 'r';
+
+    if (!strcmp(cmd, "-a"))
+        return 'a';
+
+    if (!strcmp(cmd, "-H"))
+        return 'H';
 
     return 0;
 }

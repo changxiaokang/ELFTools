@@ -1,91 +1,108 @@
 # ELFTools
 ## 项目简介
 
-C实现ELF文件解析
+C语言面向过程编程实现ELF文件解析
 
 ### 功能介绍
 
-1. 解析ELF头
-2. 解析程序表
-3. 解析节表
-4. 解析符号表
+1. 解析ELF头 (-h)
+2. 解析程序头表 (-l) 
+3. 解析节头表 (-S)
+4. 解析符号表 (-d)
+5. 解析重定位表 (-r)
+6. 解析只读数据段 (-a)
 
 ## 使用方法
 
-### -H ELF头
+### ELFTools -h hello
 ```bash
-ELFTools -H hello
-
-ELF Header: 
+ ELF Header: 
     e_type:3
     e_machine:40
     e_version:52
-    e_entry:0x00000000
+    e_entry:0x000003B8
     e_phoff:34h
-    e_shoff:3218h
+    e_shoff:8B0h
     e_flags:83886592
     e_ehsize:52
     e_phentsize:32
-    e_phnum:8
+    e_phnum:10
     e_shentsize:40
-    e_shnum:27
+    e_shnum:28
     e_shentsize:40
-    e_shnum:27
-    e_shstrndx:26
+    e_shnum:28
+    e_shstrndx:27
+
 ```
 
-### -P 程序头
+### ELFTools -l hello
 
 ```bash
-ELFTools -P hello
-
-Program Header Table: 
+ Program Header Table: 
   <0> 
     p_type:6
     p_offset:34h
     p_vaddr:0x00000034
     p_paddr:0x00000034
-    p_filesz:256
-    p_memsz:256
+    p_filesz:320
+    p_memsz:320
     p_flags:4
     p_align:4
   <1> 
+    p_type:3
+    p_offset:174h
+    p_vaddr:0x00000174
+    p_paddr:0x00000174
+    p_filesz:19
+    p_memsz:19
+    p_flags:4
+    p_align:1
+  <2> 
     p_type:1
     p_offset:0h
     p_vaddr:0x00000000
     p_paddr:0x00000000
-    p_filesz:10664
-    p_memsz:10664
+    p_filesz:1296
+    p_memsz:1296
     p_flags:5
     p_align:4096
-  <2> 
+  <3> 
     p_type:1
-    p_offset:2E30h
-    p_vaddr:0x00003E30
-    p_paddr:0x00003E30
-    p_filesz:468
-    p_memsz:469
+    p_offset:510h
+    p_vaddr:0x00001510
+    p_paddr:0x00001510
+    p_filesz:320
+    p_memsz:320
     p_flags:6
     p_align:4096
-  <3> 
+  <4> 
+    p_type:1
+    p_offset:650h
+    p_vaddr:0x00002650
+    p_paddr:0x00002650
+    p_filesz:8
+    p_memsz:12
+    p_flags:6
+    p_align:4096
+  <5> 
     p_type:2
-    p_offset:2E84h
-    p_vaddr:0x00003E84
-    p_paddr:0x00003E84
-    p_filesz:272
-    p_memsz:272
+    p_offset:528h
+    p_vaddr:0x00001528
+    p_paddr:0x00001528
+    p_filesz:248
+    p_memsz:248
     p_flags:6
     p_align:4
-  <4> 
-    p_type:4
-    p_offset:134h
-    p_vaddr:0x00000134
-    p_paddr:0x00000134
-    p_filesz:188
-    p_memsz:188
+  <6> 
+    p_type:1685382482
+    p_offset:510h
+    p_vaddr:0x00001510
+    p_paddr:0x00001510
+    p_filesz:320
+    p_memsz:2800
     p_flags:4
-    p_align:4
-  <5> 
+    p_align:1
+  <7> 
     p_type:1685382481
     p_offset:0h
     p_vaddr:0x00000000
@@ -93,31 +110,29 @@ Program Header Table:
     p_filesz:0
     p_memsz:0
     p_flags:6
-    p_align:16
-  <6> 
-    p_type:1879048193
-    p_offset:2204h
-    p_vaddr:0x00002204
-    p_paddr:0x00002204
-    p_filesz:432
-    p_memsz:432
+    p_align:0
+  <8> 
+    p_type:4
+    p_offset:188h
+    p_vaddr:0x00000188
+    p_paddr:0x00000188
+    p_filesz:188
+    p_memsz:188
     p_flags:4
     p_align:4
-  <7> 
-    p_type:1685382482
-    p_offset:2E30h
-    p_vaddr:0x00003E30
-    p_paddr:0x00003E30
-    p_filesz:464
-    p_memsz:464
-    p_flags:6
+  <9> 
+    p_type:1879048193
+    p_offset:368h
+    p_vaddr:0x00000368
+    p_paddr:0x00000368
+    p_filesz:40
+    p_memsz:40
+    p_flags:4
     p_align:4
 ```
-### -S 节表
+### ELFTools -S hello
 ```bash
-ELFTools -S hello
-
-Section Header Table: 
+ Section Header Table: 
   <0> 
     sh_name:
     sh_type:0
@@ -130,299 +145,308 @@ Section Header Table:
     sh_addralign:0
     sh_entsize:0
   <1> 
+    sh_name:.interp
+    sh_type:1
+    sh_flags:2
+    sh_addr:0x00000174
+    sh_offset:174h
+    sh_size:19
+    sh_link:0
+    sh_info:0
+    sh_addralign:1
+    sh_entsize:0
+  <2> 
     sh_name:.note.android.ident
     sh_type:7
     sh_flags:2
-    sh_addr:0x00000134
-    sh_offset:134h
+    sh_addr:0x00000188
+    sh_offset:188h
     sh_size:152
-    sh_link:0
-    sh_info:0
-    sh_addralign:4
-    sh_entsize:0
-  <2> 
-    sh_name:.note.gnu.build-id
-    sh_type:7
-    sh_flags:2
-    sh_addr:0x000001CC
-    sh_offset:1CCh
-    sh_size:36
     sh_link:0
     sh_info:0
     sh_addralign:4
     sh_entsize:0
   <3> 
+    sh_name:.note.gnu.build-id
+    sh_type:7
+    sh_flags:2
+    sh_addr:0x00000220
+    sh_offset:220h
+    sh_size:36
+    sh_link:0
+    sh_info:0
+    sh_addralign:4
+    sh_entsize:0
+  <4> 
     sh_name:.dynsym
     sh_type:11
     sh_flags:2
-    sh_addr:0x000001F0
-    sh_offset:1F0h
-    sh_size:464
-    sh_link:4
+    sh_addr:0x00000244
+    sh_offset:244h
+    sh_size:64
+    sh_link:9
     sh_info:1
     sh_addralign:4
     sh_entsize:16
-  <4> 
-    sh_name:.dynstr
-    sh_type:3
-    sh_flags:2
-    sh_addr:0x000003C0
-    sh_offset:3C0h
-    sh_size:634
-    sh_link:0
-    sh_info:0
-    sh_addralign:1
-    sh_entsize:0
   <5> 
-    sh_name:.gnu.hash
-    sh_type:1879048182
-    sh_flags:2
-    sh_addr:0x0000063C
-    sh_offset:63Ch
-    sh_size:92
-    sh_link:3
-    sh_info:0
-    sh_addralign:4
-    sh_entsize:4
-  <6> 
-    sh_name:.hash
-    sh_type:5
-    sh_flags:2
-    sh_addr:0x00000698
-    sh_offset:698h
-    sh_size:192
-    sh_link:3
-    sh_info:0
-    sh_addralign:4
-    sh_entsize:4
-  <7> 
     sh_name:.gnu.version
     sh_type:1879048191
     sh_flags:2
-    sh_addr:0x00000758
-    sh_offset:758h
-    sh_size:58
-    sh_link:3
+    sh_addr:0x00000284
+    sh_offset:284h
+    sh_size:8
+    sh_link:4
     sh_info:0
     sh_addralign:2
     sh_entsize:2
-  <8> 
-    sh_name:.gnu.version_d
-    sh_type:1879048189
-    sh_flags:2
-    sh_addr:0x00000794
-    sh_offset:794h
-    sh_size:28
-    sh_link:4
-    sh_info:1
-    sh_addralign:4
-    sh_entsize:0
-  <9> 
+  <6> 
     sh_name:.gnu.version_r
     sh_type:1879048190
     sh_flags:2
-    sh_addr:0x000007B0
-    sh_offset:7B0h
-    sh_size:64
-    sh_link:4
-    sh_info:2
+    sh_addr:0x0000028C
+    sh_offset:28Ch
+    sh_size:32
+    sh_link:9
+    sh_info:1
     sh_addralign:4
+    sh_entsize:0
+  <7> 
+    sh_name:.gnu.hash
+    sh_type:1879048182
+    sh_flags:2
+    sh_addr:0x000002AC
+    sh_offset:2ACh
+    sh_size:24
+    sh_link:4
+    sh_info:0
+    sh_addralign:4
+    sh_entsize:0
+  <8> 
+    sh_name:.hash
+    sh_type:5
+    sh_flags:2
+    sh_addr:0x000002C4
+    sh_offset:2C4h
+    sh_size:40
+    sh_link:4
+    sh_info:0
+    sh_addralign:4
+    sh_entsize:4
+  <9> 
+    sh_name:.dynstr
+    sh_type:3
+    sh_flags:2
+    sh_addr:0x000002EC
+    sh_offset:2ECh
+    sh_size:76
+    sh_link:0
+    sh_info:0
+    sh_addralign:1
     sh_entsize:0
   <10> 
     sh_name:.rel.dyn
     sh_type:9
     sh_flags:2
-    sh_addr:0x000007F0
-    sh_offset:7F0h
-    sh_size:200
-    sh_link:3
+    sh_addr:0x00000338
+    sh_offset:338h
+    sh_size:48
+    sh_link:4
     sh_info:0
     sh_addralign:4
     sh_entsize:8
   <11> 
-    sh_name:.rel.plt
-    sh_type:9
-    sh_flags:2
-    sh_addr:0x000008B8
-    sh_offset:8B8h
-    sh_size:152
-    sh_link:3
-    sh_info:0
-    sh_addralign:4
-    sh_entsize:8
-  <12> 
-    sh_name:.plt
-    sh_type:1
-    sh_flags:6
-    sh_addr:0x00000950
-    sh_offset:950h
-    sh_size:248
-    sh_link:0
+    sh_name:.ARM.exidx
+    sh_type:1879048193
+    sh_flags:130
+    sh_addr:0x00000368
+    sh_offset:368h
+    sh_size:40
+    sh_link:15
     sh_info:0
     sh_addralign:4
     sh_entsize:0
+  <12> 
+    sh_name:.rel.plt
+    sh_type:9
+    sh_flags:66
+    sh_addr:0x00000390
+    sh_offset:390h
+    sh_size:24
+    sh_link:4
+    sh_info:22
+    sh_addralign:4
+    sh_entsize:8
   <13> 
-    sh_name:.text
+    sh_name:.ARM.extab
     sh_type:1
-    sh_flags:6
-    sh_addr:0x00000A48
-    sh_offset:A48h
-    sh_size:6076
+    sh_flags:2
+    sh_addr:0x000003A8
+    sh_offset:3A8h
+    sh_size:12
     sh_link:0
     sh_info:0
     sh_addralign:4
     sh_entsize:0
   <14> 
-    sh_name:.ARM.exidx
-    sh_type:1879048193
-    sh_flags:130
-    sh_addr:0x00002204
-    sh_offset:2204h
-    sh_size:432
-    sh_link:13
-    sh_info:0
-    sh_addralign:4
-    sh_entsize:8
-  <15> 
     sh_name:.rodata
     sh_type:1
     sh_flags:50
-    sh_addr:0x000023B4
-    sh_offset:23B4h
-    sh_size:1127
+    sh_addr:0x000003B4
+    sh_offset:3B4h
+    sh_size:4
     sh_link:0
     sh_info:0
     sh_addralign:1
     sh_entsize:1
-  <16> 
-    sh_name:.ARM.extab
+  <15> 
+    sh_name:.text
     sh_type:1
-    sh_flags:2
-    sh_addr:0x0000281C
-    sh_offset:281Ch
-    sh_size:396
+    sh_flags:6
+    sh_addr:0x000003B8
+    sh_offset:3B8h
+    sh_size:256
     sh_link:0
     sh_info:0
     sh_addralign:4
     sh_entsize:0
-  <17> 
-    sh_name:.data.rel.ro
+  <16> 
+    sh_name:.plt
     sh_type:1
+    sh_flags:6
+    sh_addr:0x000004C0
+    sh_offset:4C0h
+    sh_size:80
+    sh_link:0
+    sh_info:0
+    sh_addralign:16
+    sh_entsize:0
+  <17> 
+    sh_name:.preinit_array
+    sh_type:16
     sh_flags:3
-    sh_addr:0x00003E30
-    sh_offset:2E30h
-    sh_size:76
+    sh_addr:0x00001510
+    sh_offset:510h
+    sh_size:8
     sh_link:0
     sh_info:0
     sh_addralign:4
     sh_entsize:0
   <18> 
-    sh_name:.fini_array
-    sh_type:15
+    sh_name:.init_array
+    sh_type:14
     sh_flags:3
-    sh_addr:0x00003E7C
-    sh_offset:2E7Ch
+    sh_addr:0x00001518
+    sh_offset:518h
     sh_size:8
     sh_link:0
     sh_info:0
     sh_addralign:4
     sh_entsize:0
   <19> 
-    sh_name:.dynamic
-    sh_type:6
+    sh_name:.fini_array
+    sh_type:15
     sh_flags:3
-    sh_addr:0x00003E84
-    sh_offset:2E84h
-    sh_size:272
-    sh_link:4
-    sh_info:0
-    sh_addralign:4
-    sh_entsize:8
-  <20> 
-    sh_name:.got
-    sh_type:1
-    sh_flags:3
-    sh_addr:0x00003F94
-    sh_offset:2F94h
-    sh_size:108
+    sh_addr:0x00001520
+    sh_offset:520h
+    sh_size:8
     sh_link:0
     sh_info:0
     sh_addralign:4
     sh_entsize:0
+  <20> 
+    sh_name:.dynamic
+    sh_type:6
+    sh_flags:3
+    sh_addr:0x00001528
+    sh_offset:528h
+    sh_size:248
+    sh_link:9
+    sh_info:0
+    sh_addralign:4
+    sh_entsize:8
   <21> 
-    sh_name:.data
+    sh_name:.got
     sh_type:1
     sh_flags:3
-    sh_addr:0x00004000
-    sh_offset:3000h
-    sh_size:4
+    sh_addr:0x00001620
+    sh_offset:620h
+    sh_size:24
     sh_link:0
     sh_info:0
     sh_addralign:4
     sh_entsize:0
   <22> 
+    sh_name:.got.plt
+    sh_type:1
+    sh_flags:3
+    sh_addr:0x00001638
+    sh_offset:638h
+    sh_size:24
+    sh_link:0
+    sh_info:0
+    sh_addralign:4
+    sh_entsize:0
+  <23> 
+    sh_name:.data
+    sh_type:1
+    sh_flags:3
+    sh_addr:0x00002650
+    sh_offset:650h
+    sh_size:8
+    sh_link:0
+    sh_info:0
+    sh_addralign:4
+    sh_entsize:0
+  <24> 
     sh_name:.bss
     sh_type:8
     sh_flags:3
-    sh_addr:0x00004004
-    sh_offset:3004h
-    sh_size:1
-    sh_link:0
-    sh_info:0
-    sh_addralign:1
-    sh_entsize:0
-  <23> 
-    sh_name:.comment
-    sh_type:1
-    sh_flags:48
-    sh_addr:0x00000000
-    sh_offset:3004h
-    sh_size:182
-    sh_link:0
-    sh_info:0
-    sh_addralign:1
-    sh_entsize:1
-  <24> 
-    sh_name:.note.gnu.gold-version
-    sh_type:7
-    sh_flags:0
-    sh_addr:0x00000000
-    sh_offset:30BCh
-    sh_size:28
+    sh_addr:0x00002658
+    sh_offset:658h
+    sh_size:4
     sh_link:0
     sh_info:0
     sh_addralign:4
     sh_entsize:0
   <25> 
+    sh_name:.comment
+    sh_type:1
+    sh_flags:48
+    sh_addr:0x00000000
+    sh_offset:658h
+    sh_size:277
+    sh_link:0
+    sh_info:0
+    sh_addralign:1
+    sh_entsize:1
+  <26> 
     sh_name:.ARM.attributes
     sh_type:1879048195
     sh_flags:0
     sh_addr:0x00000000
-    sh_offset:30D8h
-    sh_size:46
+    sh_offset:76Dh
+    sh_size:58
     sh_link:0
     sh_info:0
     sh_addralign:1
     sh_entsize:0
-  <26> 
+  <27> 
     sh_name:.shstrtab
     sh_type:3
     sh_flags:0
     sh_addr:0x00000000
-    sh_offset:3106h
-    sh_size:271
+    sh_offset:7A7h
+    sh_size:264
     sh_link:0
     sh_info:0
     sh_addralign:1
     sh_entsize:0
 ```
 
-### -d 符号表
+### ELFTools -d hello
 
 ```bash
-ELFTools -d hello
-
-Dynamic Symbol Table: 
+ Dynamic Symbol Table: 
   <0> 
     st_name:
     st_value:0x00000000
@@ -438,205 +462,56 @@ Dynamic Symbol Table:
     st_other:0
     st_shndx:0
   <2> 
-    st_name:__cxa_finalize
+    st_name:__libc_init
     st_value:0x00000000
     st_size:0
     st_info:18
     st_other:0
     st_shndx:0
   <3> 
-    st_name:__strcpy_chk
+    st_name:printf
     st_value:0x00000000
     st_size:0
     st_info:18
     st_other:0
     st_shndx:0
-  <4> 
-    st_name:malloc
-    st_value:0x00000000
-    st_size:0
-    st_info:18
-    st_other:0
-    st_shndx:0
-  <5> 
-    st_name:strcpy
-    st_value:0x00000000
-    st_size:0
-    st_info:18
-    st_other:0
-    st_shndx:0
-  <6> 
-    st_name:fflush
-    st_value:0x00000000
-    st_size:0
-    st_info:18
-    st_other:0
-    st_shndx:0
-  <7> 
-    st_name:fprintf
-    st_value:0x00000000
-    st_size:0
-    st_info:18
-    st_other:0
-    st_shndx:0
-  <8> 
-    st_name:__sF
-    st_value:0x00000000
-    st_size:0
-    st_info:17
-    st_other:0
-    st_shndx:0
-  <9> 
-    st_name:__stack_chk_fail
-    st_value:0x00000000
-    st_size:0
-    st_info:18
-    st_other:0
-    st_shndx:0
-  <10> 
-    st_name:__stack_chk_guard
-    st_value:0x00000000
-    st_size:0
-    st_info:17
-    st_other:0
-    st_shndx:0
-  <11> 
-    st_name:abort
-    st_value:0x00000000
-    st_size:0
-    st_info:18
-    st_other:0
-    st_shndx:0
-  <12> 
-    st_name:__aeabi_memclr
-    st_value:0x00000000
-    st_size:0
-    st_info:18
-    st_other:0
-    st_shndx:0
-  <13> 
-    st_name:__aeabi_memcpy
-    st_value:0x00000000
-    st_size:0
-    st_info:18
-    st_other:0
-    st_shndx:0
-  <14> 
-    st_name:__gnu_Unwind_Find_exidx
-    st_value:0x00000000
-    st_size:0
-    st_info:18
-    st_other:0
-    st_shndx:0
-  <15> 
-    st_name:dladdr
-    st_value:0x00000000
-    st_size:0
-    st_info:18
-    st_other:0
-    st_shndx:0
-  <16> 
-    st_name:snprintf
-    st_value:0x00000000
-    st_size:0
-    st_info:18
-    st_other:0
-    st_shndx:0
-  <17> 
-    st_name:Java_wiki_k4ng_hellondk_MainActivity_Add
-    st_value:0x00000ACD
-    st_size:20
-    st_info:18
-    st_other:0
-    st_shndx:13
-  <18> 
-    st_name:Java_wiki_k4ng_hellondk_MainActivity_String2B64
-    st_value:0x00000AF5
-    st_size:162
-    st_info:18
-    st_other:0
-    st_shndx:13
-  <19> 
-    st_name:_ZN7_JNIEnv9NewStringEPKti
-    st_value:0x00000BDD
-    st_size:38
-    st_info:34
-    st_other:0
-    st_shndx:13
-  <20> 
-    st_name:_edata
-    st_value:0x00004004
-    st_size:0
-    st_info:16
-    st_other:0
-    st_shndx:65521
-  <21> 
-    st_name:_end
-    st_value:0x00004005
-    st_size:0
-    st_info:16
-    st_other:0
-    st_shndx:65521
-  <22> 
-    st_name:Java_wiki_k4ng_hellondk_MainActivity_Sub
-    st_value:0x00000AE1
-    st_size:20
-    st_info:18
-    st_other:0
-    st_shndx:13
-  <23> 
-    st_name:_ZN7_JNIEnv12NewStringUTFEPKc
-    st_value:0x00000AAD
-    st_size:32
-    st_info:34
-    st_other:0
-    st_shndx:13
-  <24> 
-    st_name:_ZN7_JNIEnv14GetStringCharsEP8_jstringPh
-    st_value:0x00000B97
-    st_size:38
-    st_info:34
-    st_other:0
-    st_shndx:13
-  <25> 
-    st_name:__bss_start
-    st_value:0x00004004
-    st_size:0
-    st_info:16
-    st_other:0
-    st_shndx:65521
-  <26> 
-    st_name:Java_wiki_k4ng_hellondk_MainActivity_stringFromJNI
-    st_value:0x00000A8D
-    st_size:32
-    st_info:18
-    st_other:0
-    st_shndx:13
-  <27> 
-    st_name:_ZN7_JNIEnv15GetStringLengthEP8_jstring
-    st_value:0x00000BBD
-    st_size:32
-    st_info:34
-    st_other:0
-    st_shndx:13
-  <28> 
-    st_name:_ZN7_JNIEnv21ReleaseStringUTFCharsEP8_jstringPKc
-    st_value:0x00000C03
-    st_size:38
-    st_info:34
-    st_other:0
-    st_shndx:13
 ```
 
-### -h 使用方法
+### ELFTools -r hello
+
+```
+ Relocation Table: 
+
+  .rel.dyn relocation info:
+  <0>	 r_offset:0x00001620	 r_info:23	 r_type:23 | r_sym:0
+  <1>	 r_offset:0x00001624	 r_info:23	 r_type:23 | r_sym:0
+  <2>	 r_offset:0x00001628	 r_info:23	 r_type:23 | r_sym:0
+  <3>	 r_offset:0x0000162C	 r_info:23	 r_type:23 | r_sym:0
+  <4>	 r_offset:0x00001630	 r_info:23	 r_type:23 | r_sym:0
+  <5>	 r_offset:0x00001634	 r_info:23	 r_type:23 | r_sym:0
+
+  .rel.plt relocation info:
+  <0>	 r_offset:0x00001644	 r_info:534	 r_type:22 | r_sym:2
+  <1>	 r_offset:0x00001648	 r_info:278	 r_type:22 | r_sym:1
+  <2>	 r_offset:0x0000164C	 r_info:790	 r_type:22 | r_sym:3
+```
+
+### ELFTools -a hello
+
+```
+ .rodata Section String: 
+    %d
+```
+
+### ELFTools -H hello
 
 ```bash
-ELFTools -h hello
-
 Usage: ELFTools <option(s)> <file(s)>
--H ELF Header
--P Program Header Table
+-h ELF Header
+-l Program Header Table
 -S Section Header Table
--d Dynsym Headr Table
--h Help Document
+-d Dynsym Table
+-r Relocation Table
+-a RoData Section
+-H Help Document
 ```
